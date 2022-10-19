@@ -19,27 +19,17 @@ namespace plusers
                 if (group != null)
                     // iterate over members
                     foreach (var p in group.GetMembers())
-                    {
                         if (stype == "email")
-                        {
-                            Console.WriteLine("{0}: Login: {1} - Name: {2} Email:{3} ", p.StructuralObjectClass, p.Name, p.DisplayName, p.UserPrincipalName);
-                            // do whatever you need to do to those members
-                           // var theUser = p as UserPrincipal;
-
-                            //if (theUser != null)
-                            //{
-                            //     Console.WriteLine(theUser.Name, theUser.EmailAddress, theUser.GivenName);
-                            //}
-                        }
+                            Console.WriteLine("{0}: Login: {1} - Name: {2} Email:{3} ", p.StructuralObjectClass, p.Name,
+                                p.DisplayName, p.UserPrincipalName);
+                        // do whatever you need to do to those members
+                        // var theUser = p as UserPrincipal;
+                        //if (theUser != null)
+                        //{
+                        //     Console.WriteLine(theUser.Name, theUser.EmailAddress, theUser.GivenName);
+                        //}
                         else
-                        {
                             Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
-                        }
-
-
-
-                    }
-            
             }
             catch (NullReferenceException err1)
             {
@@ -52,8 +42,8 @@ namespace plusers
         {
             if (args.Length == 0)
             {
-                GetListOfAdUsersByGroup( "basic");
-                return ;
+                GetListOfAdUsersByGroup("basic");
+                return;
             }
 
             switch (args[0].ToLower())
@@ -82,9 +72,6 @@ namespace plusers
                     Console.WriteLine("Not a valid switch");
                     break;
             }
-
-            //Console.ReadKey();
-            return ;
         }
     }
 }
