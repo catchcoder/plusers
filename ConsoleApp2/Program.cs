@@ -1,18 +1,14 @@
 ﻿using System;
 using System.DirectoryServices.AccountManagement;
 
-//https://community.spiceworks.com/topic/1435726-best-way-to-get-members-of-an-ad-group-in-c-net-4-0
-
 namespace plusers
 {
     internal class Program
     {
-        private static void GetListOfAdUsersByGroup()
+        private static void GetListOfAdUsersByGroup(string stype)
         {
             try
             {
-                // string userName = "cecth-a";
-                // create your domain context
                 var ctx = new PrincipalContext(ContextType.Domain, "ads.bris.ac.uk");
 
                 // define a "query-by-example" principal - here, we search for a GroupPrincipal
@@ -24,14 +20,20 @@ namespace plusers
                     // iterate over members
                     foreach (var p in group.GetMembers())
                     {
-                        Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
-
-                        // do whatever you need to do to those members
-                        var theUser = p as UserPrincipal;
-
-                        if (theUser != null)
+                        if (stype == "email")
                         {
-                           // Console.WriteLine(theUser.Name);
+                            Console.WriteLine("{0}: Login: {1} - Name: {2} Email:{3} ", p.StructuralObjectClass, p.Name, p.DisplayName, p.UserPrincipalName);
+                            // do whatever you need to do to those members
+                           // var theUser = p as UserPrincipal;
+
+                            //if (theUser != null)
+                            //{
+                            //     Console.WriteLine(theUser.Name, theUser.EmailAddress, theUser.GivenName);
+                            //}
+                        }
+                        else
+                        {
+                            Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
                         }
 
 
@@ -50,17 +52,17 @@ namespace plusers
         {
             if (args.Length == 0)
             {
-                GetListOfAdUsersByGroup();
+                GetListOfAdUsersByGroup( "basic");
                 return ;
             }
 
             switch (args[0].ToLower())
             {
-                case "--full":
-                    //do something
+                case "--email-address":
+                    GetListOfAdUsersByGroup("full");
                     break;
-                case "-f":
-                    goto case "--full";
+                case "-e":
+                    goto case "--email-address";
                 case "--add-user":
                     //do something
                     break;
@@ -80,8 +82,8 @@ namespace plusers
                     Console.WriteLine("Not a valid switch");
                     break;
             }
-            Console.WriteLine("param {0}", args[0]);
-            Console.ReadKey();
+
+            //Console.ReadKey();
             return ;
         }
     }
