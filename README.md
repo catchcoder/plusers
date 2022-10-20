@@ -11,8 +11,11 @@ Run in a command console
 ### Options
 
 -a --add-user
+
 -r --remove-user
+
 -e --email-address
+
 -h --help
 
 ### CODE
