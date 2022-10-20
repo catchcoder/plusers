@@ -2,9 +2,14 @@
 using System.DirectoryServices.AccountManagement;
 
 namespace plusers
+
+
+
 {
     internal class Program
     {
+        private string[] argu;
+
         private static void GetListOfAdUsersByGroup(string stype)
         {
             try
@@ -40,6 +45,8 @@ namespace plusers
 
         private static void Main(string[] args)
         {
+            argu[] = args[];
+
             if (args.Length == 0)
             {
                 GetListOfAdUsersByGroup("basic");
@@ -49,22 +56,26 @@ namespace plusers
             switch (args[0].ToLower())
             {
                 case "--email-address":
+                    //Display Users and email addresses
                     GetListOfAdUsersByGroup("full");
                     break;
                 case "-e":
                     goto case "--email-address";
                 case "--add-user":
-                    //do something
+                    //Add user to the security group
+                    PlusersAddUser();
                     break;
                 case "-a":
                     goto case "--add-user";
                 case "--remove-user":
-                    //do something
+                    //Remove user from Security group
+                    PlusersRemoveUser();
                     break;
                 case "-r":
                     goto case "--remove-user";
                 case "--help":
-                    //do something
+                    //Displays help
+                    PlusersHelp();
                     break;
                 case "-h":
                     goto case "--help";
@@ -73,5 +84,27 @@ namespace plusers
                     break;
             }
         }
+
+        private static void PlusersHelp()
+        {
+
+        }
+        private static void PlusersRemoveUser()
+        {
+
+        }
+        private static void PlusersAddUser()
+        {
+
+        }
+
+        private static void CheckArgumentUsername()
+        {
+            if (null == args[1])
+            {
+
+            } 
+        }
+
     }
 }
