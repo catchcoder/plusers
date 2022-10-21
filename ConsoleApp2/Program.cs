@@ -20,14 +20,14 @@ namespace plusers
 
 
                 // if found....
-                if (group != null)
-                    // iterate over members
-                    foreach (var p in group.GetMembers())
-                        if (stype == "email")
-                            Console.WriteLine("{0}: Login: {1} - Name: {2} Email:{3} ", p.StructuralObjectClass, p.Name,
-                                p.DisplayName, p.UserPrincipalName);
-                        else
-                            Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
+                if (group == null) return;
+                // iterate over members
+                foreach (var p in group.GetMembers())
+                    if (stype == "email")
+                        Console.WriteLine("{0}: Login: {1} - Name: {2} Email:{3} ", p.StructuralObjectClass, p.Name,
+                            p.DisplayName, p.UserPrincipalName);
+                    else
+                        Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
             }
             catch (NullReferenceException err1)
             {
@@ -84,7 +84,7 @@ namespace plusers
                         break;
                 }
 
-                Console.ReadKey();
+                //Console.ReadKey();
             }
             catch (Exception ex)
             {
@@ -112,13 +112,23 @@ namespace plusers
             try
             {
                 if (DoesUserExist())
+                {
+                    if (!IsInGroup())
+                    {
+                        Console.WriteLine("User {0} is not a member of {1}", Globals.CommandSwitches[1], Globals.AdSecurityGroup);
+                        return;
+                    }
                     using (var pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
                     {
                         var group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
-                        group.Members.Remove(pc, IdentityType.SamAccountName,
-                            Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
-                        group.Save();
+                        if (group != null)
+                        {
+                            group.Members.Remove(pc, IdentityType.SamAccountName,
+                                Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
+                            group.Save();
+                        }
                     }
+                }
             }
             catch (DirectoryServicesCOMException ex)
             {
@@ -132,13 +142,25 @@ namespace plusers
             try
             {
                 if (DoesUserExist())
+                {
+                    if (IsInGroup())
+                    {
+                        Console.WriteLine("User {0} is already a member of {1}", Globals.CommandSwitches[1],
+                            Globals.AdSecurityGroup);
+                        return;
+                    }
+
                     using (var pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
                     {
                         var group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
-                        group.Members.Add(pc, IdentityType.SamAccountName,
-                            Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
-                        group.Save();
+                        if (group != null)
+                        {
+                            group.Members.Add(pc, IdentityType.SamAccountName,
+                                Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
+                            group.Save();
+                        }
                     }
+                }
             }
             catch (DirectoryServicesCOMException ex)
             {
@@ -159,6 +181,20 @@ namespace plusers
             }
         }
 
+        private static bool IsInGroup()
+        {
+            string username = Environment.UserName;
+
+            PrincipalContext ctx = new PrincipalContext(ContextType.Domain, Globals.AdDomain);
+
+            UserPrincipal userPrincipal =
+                UserPrincipal.FindByIdentity(ctx, IdentityType.SamAccountName, Globals.CommandSwitches[1]);
+
+            bool isMember = userPrincipal.IsMemberOf(ctx, IdentityType.Name, Globals.AdSecurityGroup);
+
+            return isMember;
+        }
+
         private static bool CheckArgumentUsername()
         {
             if (null == Globals.CommandSwitches[1])
@@ -177,12 +213,12 @@ namespace plusers
         // static class to hold global variables, etc.
         private class Globals
         {
-            // global int
+            // global variable
             public static readonly string AdDomain = "ads.bris.ac.uk";
 
             public static readonly string AdSecurityGroup = "pl-app-sindri-p0-rw";
 
-            public static readonly string[] CommandSwitches = new string[2];
+            public static string[] CommandSwitches = new string[2];
         }
     }
 }
