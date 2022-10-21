@@ -84,15 +84,21 @@ namespace plusers
                         break;
                     case "--add-user":
                         //Check username provided
-                        if (CheckArgumentUsername() == false)
+                        if (CheckArgumentUsername() == true)
+                        {
                             //Add user to the security group
                             PlusersAddUser();
+                        }
                         break;
                     case "-a":
                         goto case "--add-user";
                     case "--remove-user":
-                        //Remove user from Security group
-                        PlusersRemoveUser();
+                        if (CheckArgumentUsername() == true)
+                        {
+                            //Remove user from Security group
+                            PlusersRemoveUser();
+                        }
+
                         break;
                     case "-r":
                         goto case "--remove-user";
@@ -109,9 +115,9 @@ namespace plusers
 
                 Console.ReadKey();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine("Error: {0}", e);
+                Console.WriteLine("Error: {0}", ex);
                 throw;
             }
         }
@@ -134,13 +140,54 @@ namespace plusers
         }
         private static void PlusersRemoveUser()
         {
-            //code
+            try
+            {
+                if (DoesUserExist() == true)
+                {
+                    using (PrincipalContext pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
+                    {
+                        GroupPrincipal group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
+                        group.Members.Remove(pc, IdentityType.UserPrincipalName, Globals.CommandSwitches[1]);
+                        group.Save();
+                    }
+                }
+            }
+            catch (System.DirectoryServices.DirectoryServicesCOMException ex)
+            {
+                Console.WriteLine("Error: {0}", ex.ToString() );
+                throw;
+            }
         }
         private static void PlusersAddUser()
         {
-            //code
+            try
+            {
+                if (DoesUserExist() == true)
+                {
+                    using (PrincipalContext pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
+                    {
+                        GroupPrincipal group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
+                        group.Members.Add(pc, IdentityType.UserPrincipalName, Globals.CommandSwitches[1]);
+                        group.Save();
+                    }
+                }
+            }
+            catch (System.DirectoryServices.DirectoryServicesCOMException ex)
+            {
+                Console.WriteLine("Error: {0}", ex.ToString());
+                throw;
+            }
         }
-
+        private static bool DoesUserExist()
+        {
+            using (var domainContext = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
+            {
+                using (var foundUser = UserPrincipal.FindByIdentity(domainContext, IdentityType.SamAccountName, Globals.CommandSwitches[1]))
+                {
+                    return foundUser != null;
+                }
+            }
+        }
         private static bool CheckArgumentUsername()
         {
             if (null == Globals.CommandSwitches[1])
