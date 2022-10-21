@@ -89,7 +89,7 @@ namespace plusers
                         break;
                 }
 
-                Console.ReadKey();
+                //Console.ReadKey();
             }
             catch (Exception ex)
             {
