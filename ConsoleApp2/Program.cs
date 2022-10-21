@@ -54,9 +54,9 @@ namespace plusers
 
                 switch (args[0].ToLower())
                 {
-                    case "--email-addresses":
+                    case "--email-address":
                         //Display Users and email addresses
-                        GetListOfAdUsersByGroup("full");
+                        GetListOfAdUsersByGroup("email");
                         break;
                     case "--add-user":
                         //Check username provided
@@ -69,7 +69,12 @@ namespace plusers
                     case "--remove-user":
                         if (CheckArgumentUsername())
                             //Remove user from Security group
-                            PlusersRemoveUser();
+                            if (RemoveActiveUser())
+                            {
+                                Console.WriteLine("You can not remove yourself");
+                                break;
+                            }
+                        PlusersRemoveUser();
                         break;
                     case "-r":
                         goto case "--remove-user";
@@ -84,7 +89,7 @@ namespace plusers
                         break;
                 }
 
-                //Console.ReadKey();
+                Console.ReadKey();
             }
             catch (Exception ex)
             {
@@ -115,17 +120,19 @@ namespace plusers
                 {
                     if (!IsInGroup())
                     {
-                        Console.WriteLine("User {0} is not a member of {1}", Globals.CommandSwitches[1], Globals.AdSecurityGroup);
-                        return;
+                        Console.WriteLine("User {0} is not a member of {1}", Globals.CommandSwitches[1],
+                            Globals.AdSecurityGroup);
+
+                        using (var pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
+                        {
+                            var group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
+                            if (group == null) return;
+                            group.Members.Remove(pc, IdentityType.SamAccountName,
+                                Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
+                            group.Save();
+                        }
                     }
-                    using (var pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
-                    {
-                        var group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
-                        if (group == null) return;
-                        group.Members.Remove(pc, IdentityType.SamAccountName,
-                            Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
-                        group.Save();
-                    }
+
                 }
             }
             catch (DirectoryServicesCOMException ex)
@@ -181,14 +188,13 @@ namespace plusers
 
         private static bool IsInGroup()
         {
-            string username = Environment.UserName;
 
             PrincipalContext ctx = new PrincipalContext(ContextType.Domain, Globals.AdDomain);
 
             UserPrincipal userPrincipal =
                 UserPrincipal.FindByIdentity(ctx, IdentityType.SamAccountName, Globals.CommandSwitches[1]);
 
-            bool isMember = userPrincipal.IsMemberOf(ctx, IdentityType.Name, Globals.AdSecurityGroup);
+            bool isMember = userPrincipal.IsMemberOf(ctx, IdentityType.SamAccountName, Globals.AdSecurityGroup);
 
             return isMember;
         }
@@ -200,6 +206,18 @@ namespace plusers
             return false;
 
         }
+
+        private static bool RemoveActiveUser()
+        {
+            //string username = Environment.UserName;
+            if (Environment.UserName == Globals.CommandSwitches[1])
+                return true;
+            else
+            {
+                return false;
+            }
+        }
+
 
         // static class to hold global variables, etc.
         private class Globals
