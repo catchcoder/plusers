@@ -121,12 +121,10 @@ namespace plusers
                     using (var pc = new PrincipalContext(ContextType.Domain, Globals.AdDomain))
                     {
                         var group = GroupPrincipal.FindByIdentity(pc, Globals.AdSecurityGroup);
-                        if (group != null)
-                        {
-                            group.Members.Remove(pc, IdentityType.SamAccountName,
-                                Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
-                            group.Save();
-                        }
+                        if (group == null) return;
+                        group.Members.Remove(pc, IdentityType.SamAccountName,
+                            Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
+                        group.Save();
                     }
                 }
             }
@@ -197,17 +195,10 @@ namespace plusers
 
         private static bool CheckArgumentUsername()
         {
-            if (null == Globals.CommandSwitches[1])
-            {
-                Console.WriteLine("Missing Username");
-                return false;
-            }
+            if (null != Globals.CommandSwitches[1]) return true;
+            Console.WriteLine("Missing Username");
+            return false;
 
-            //Check username provided is Correct
-            //blah blah
-
-            //return username is good
-            return true;
         }
 
         // static class to hold global variables, etc.
