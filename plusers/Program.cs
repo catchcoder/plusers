@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Text;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.Reflection;
+using System.Text;
 
 namespace plusers
 
@@ -29,9 +30,9 @@ namespace plusers
                     else
                         Console.WriteLine("{0}: {1} - {2}", p.StructuralObjectClass, p.Name, p.DisplayName);
             }
-            catch (NullReferenceException err1)
+            catch (NullReferenceException ex)
             {
-                Console.WriteLine(err1);
+                Console.WriteLine(ex);
             }
         }
 
@@ -40,7 +41,8 @@ namespace plusers
         {
             try
             {
-                Console.WriteLine("PL User v0.1 - Tool to manage users in a Security Group\n");
+
+                Console.WriteLine("PL User v{0} - Tool to manage users in a Security Group\n", Assembly.GetEntryAssembly().GetName().Version);
 
                 if (args.Length == 0)
                 {
@@ -69,11 +71,12 @@ namespace plusers
                     case "--remove-user":
                         if (CheckArgumentUsername())
                             //Remove user from Security group
-                            if (RemoveActiveUser())
+                            if (RemoveActiveUserCheck())
                             {
                                 Console.WriteLine("You can not remove yourself");
                                 break;
                             }
+
                         PlusersRemoveUser();
                         break;
                     case "-r":
@@ -90,6 +93,10 @@ namespace plusers
                 }
 
                 //Console.ReadKey();
+            }
+            catch (ArgumentNullException ex)
+            {
+                Console.WriteLine("Error: {0} ", ex.Message);
             }
             catch (Exception ex)
             {
@@ -130,6 +137,8 @@ namespace plusers
                             group.Members.Remove(pc, IdentityType.SamAccountName,
                                 Globals.AdDomain + "\\" + Globals.CommandSwitches[1]);
                             group.Save();
+                            group.Dispose();
+                            pc.Dispose();
                         }
                     }
 
@@ -140,6 +149,11 @@ namespace plusers
                 Console.WriteLine("Error: {0}", ex.Message);
                 throw;
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: {0}", ex.Message);
+            }
+
         }
 
         private static void PlusersAddUser()
@@ -188,15 +202,23 @@ namespace plusers
 
         private static bool IsInGroup()
         {
+            try
+            {
+                PrincipalContext ctx = new PrincipalContext(ContextType.Domain, Globals.AdDomain);
 
-            PrincipalContext ctx = new PrincipalContext(ContextType.Domain, Globals.AdDomain);
+                UserPrincipal userPrincipal =
+                    UserPrincipal.FindByIdentity(ctx, IdentityType.SamAccountName, Globals.CommandSwitches[1]);
 
-            UserPrincipal userPrincipal =
-                UserPrincipal.FindByIdentity(ctx, IdentityType.SamAccountName, Globals.CommandSwitches[1]);
+                bool isMember = userPrincipal.IsMemberOf(ctx, IdentityType.SamAccountName, Globals.AdSecurityGroup);
 
-            bool isMember = userPrincipal.IsMemberOf(ctx, IdentityType.SamAccountName, Globals.AdSecurityGroup);
+                return isMember;
+            }
+            catch (ArgumentNullException ex)
+            {
+                Console.WriteLine("Error: {0} ", ex.Message);
+                throw;
+            }
 
-            return isMember;
         }
 
         private static bool CheckArgumentUsername()
@@ -207,15 +229,10 @@ namespace plusers
 
         }
 
-        private static bool RemoveActiveUser()
+        private static bool RemoveActiveUserCheck()
         {
             //string username = Environment.UserName;
-            if (Environment.UserName == Globals.CommandSwitches[1])
-                return true;
-            else
-            {
-                return false;
-            }
+            return Environment.UserName == Globals.CommandSwitches[1];
         }
 
 
@@ -223,11 +240,12 @@ namespace plusers
         private class Globals
         {
             // global variable
-            public static readonly string AdDomain = "ads.bris.ac.uk";
+            public const string AdDomain = "ads.bris.ac.uk";
 
-            public static readonly string AdSecurityGroup = "pl-app-sindri-p0-rw";
+            // public static readonly string AdSecurityGroup = "pl-app-sindri-p0-rw";
+            public const string AdSecurityGroup = "pl-biodna-p0-rw";
 
-            public static string[] CommandSwitches = new string[2];
+            public static readonly string[] CommandSwitches = new string[2];
         }
     }
 }
